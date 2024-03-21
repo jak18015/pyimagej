@@ -1,3 +1,4 @@
+import imagej as ij
 import ipywidgets
 
 def _axis_index(image, *options):
