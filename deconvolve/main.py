@@ -11,7 +11,6 @@ ri_sample = 1.0
 lat_res = 0.07
 ax_res = 1.0
 pz = 0.0
-iterstring = f"{iterations:02}"
 
 # ---- START SCRIPT ----
 ij = setup_imagej()
@@ -30,6 +29,7 @@ decon_img = process(
     ij, img_path, wavelength, iterations, reg, na,
     ri_sample, ri_immersion, lat_res, ax_res, pz
 )
+iterstring = f"{iterations:02}"
 save_image(ij, wd, img, decon_img, iterstring, reg)
 
 ij.dispose()
