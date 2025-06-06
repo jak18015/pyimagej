@@ -49,7 +49,7 @@ def deconvolve(ij, img, wv, iterations, reg, na, ri_sample, ri_immersion, lat_re
     return dimg
 
 
-def process(ij, image_path, wavelengths, iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz):
+def process(ij, image_path, wavelength, iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz):
     """Loads and deconvolves each channel of an image."""
     print(f"Processing image: {image_path}")
     img = ij.io().open(image_path)
@@ -59,9 +59,9 @@ def process(ij, image_path, wavelengths, iterations, reg, na, ri_sample, ri_imme
 
     for channel in range(img.shape[2]):
         if img.ndim == 3:
-            decon = deconvolve(ij, img[:, :, channel], wavelengths[channel], iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz)
+            decon = deconvolve(ij, img[:, :, channel], wavelength[channel], iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz)
         elif img.ndim == 4:
-            decon = deconvolve(ij, img[:, :, channel, :], wavelengths[channel], iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz)
+            decon = deconvolve(ij, img[:, :, channel, :], wavelength[channel], iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz)
         decon = ij.py.from_java(decon)
         decon_channels.append(decon)
 
