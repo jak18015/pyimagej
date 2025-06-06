@@ -20,6 +20,17 @@ import os
 # -------------------------------------------------
 # FUNCTIONS
 # -------------------------------------------------
+def dump_info(image):
+    """A handy function to print details of an image object."""
+    name = image.name if hasattr(image, 'name') else None # xarray
+    if name is None and hasattr(image, 'getName'): name = image.getName() # Dataset
+    if name is None and hasattr(image, 'getTitle'): name = image.getTitle() # ImagePlus
+    print(f" name: {name or 'N/A'}")
+    print(f" type: {type(image)}")
+    print(f"dtype: {image.dtype if hasattr(image, 'dtype') else 'N/A'}")
+    print(f"shape: {image.shape}")
+    print(f" dims: {image.dims if hasattr(image, 'dims') else 'N/A'}")
+
 
 def deconvolve(img, wv, iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz):
     """
@@ -57,7 +68,7 @@ def deconvolve(img, wv, iterations, reg, na, ri_sample, ri_immersion, lat_res, a
     return img_decon
 
 
-def process(image):
+def process(wd, image):
     """
     Processes a single image by deconvolving it and saving the result.
 
@@ -65,24 +76,33 @@ def process(image):
     image : str
         The filename of the image to be processed.
     """
+    print(f"Processing image: {image}")
     title = image[:-4]
-    img = ij.io().open(image)
+    img = ij.io().open(os.path.join(wd, image))
+    dump_info(img)  # print image info
     img = ij.op().convert().float32(img)
     decon_slices = []
     for i in range(img.shape[2]):
-        slice_img = img[:, :, i]
+        slice_img = img[:, :, i, :]
         wv = wavelength[i]
+        print(f"Deconvolving channel {i+1}/{img.shape[2]} with wavelength {wv} nm")
         img_decon = deconvolve(slice_img, wv, iterations, reg, na, ri_sample, ri_immersion, lat_res, ax_res, pz)
         decon_slices.append(img_decon)
     img_decon = Views.stack(decon_slices)
-    ximg_decon = ij.py.from_java(img_decon)
-    img_decon = ij.py.to_dataset(ximg_decon, dim_order=['ch', 'row', 'col'])
-    output_title = title + '-deconvolved.tif'
+    # stacked_py = ij.py.from_java(img_decon)
+    # dump_info(stacked_py)
+    # img_decon = ij.py.to_dataset(stacked_py, dim_order=['z', 'ch', 'y', 'x'])
+    # img_decon.axis(0).setType(ij.axis.Axes.Z)
+    # img_decon.axis(1).setType(ij.axis.Axes.CHANNEL)
+    # img_decon.axis(2).setType(ij.axis.Axes.Y)
+    # img_decon.axis(3).setType(ij.axis.Axes.X)
+    dump_info(img_decon)
+    output_title = title + '-deconvolved.ome.tif'
     if os.path.exists(f'{wd}/{output_title}'):
         os.remove(f'{wd}/{output_title}')
     print(f"Removed existing file: {output_title}")
-    ij.io().save(img_decon, f'{wd}/{output_title}')
-    print(f"Saved deconvolved image as {output_title}.")
+    ij.io().save(img_decon, f"{wd}/{output_title}")
+    print(f"Saved deconvolved image as {output_title}")
 
 # -------------------------------------------------
 # SETUP
@@ -90,7 +110,8 @@ def process(image):
 
 sj.config.add_option('-Xmx6g') # set the maximum heap size to 6 GB
 ij = imagej.init(add_legacy=False) # initialize ImageJ2
-print(f"ImageJ2 version: {ij.getVersion()}") 
+print(f"ImageJ2 version: {ij.getVersion()}")
+print(ij.getApp().getInfo(True)) # print ImageJ2 info
 
 # import imagej2 and imglib2 Java classes
 CreateNamespace = imagej.sj.jimport('net.imagej.ops.create.CreateNamespace')
@@ -101,7 +122,7 @@ Views = sj.jimport('net.imglib2.view.Views')
 iterations = 30 # number of iterations
 reg = 0.002 # regularization factor``
 na = 1.4 # numerical aperture
-wavelength = [617, 508, 461, 550] # emission wavelengths (in nm)
+wavelength = [617, 594, 508, 461] # emission wavelengths (in nm)
 ri_immersion = 1.5 # refractive index (immersion)
 ri_sample = 1.4 # refractive index (sample)
 lat_res = 0.07 # lateral resolution (i.e. xy)
@@ -112,11 +133,13 @@ pz = 0 # distance away from coverslip
 # MAIN
 # -------------------------------------------------
 
-wd = os.getcwd()
-img_list = os.listdir(wd)
-img_list = [f for f in img_list if f.endswith('.tif') and not f.endswith('-deconvolved.tif')]
-img_list.sort()
-for idx, img in enumerate(img_list):
-    print(f"[{idx}/{len(img_list)}]\n\tProcessing {img}...")
-    process(img)
+# wd = input("enter the directory with images:\n").strip()
+wd = '/Users/jkellerm/Library/CloudStorage/OneDrive-MichiganMedicine/0-active-projects/expansion/expansion_20250605_nikon/'
+img = 'nd010-1.tif'
+# img_list = [f for f in os.listdir(wd) if f.lower().endswith('.tif') or f.lower().endswith('.tiff')]
+# print("TIFF images found:")
+# for img in img_list:
+    # print(f" - {img}")
+# img = input("enter the image to deconvolve:\n").strip()
+process(wd, img)
 ij.dispose() # close the ImageJ instance

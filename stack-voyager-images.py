@@ -21,7 +21,12 @@ import re
 import numpy as np
 from tifffile import imwrite, imread
 
-folder = input("Enter the path to the folder containing TIFF files: ")
+if input("Define a folder (y) or use the predefined one (n)? (y/n): ").strip().lower() == 'y':
+    folder = input("Enter the path to the folder containing TIFF files: ")
+else:
+    # Default folder path (change this to your default path)
+    folder = "/Users/jkellerm/Library/CloudStorage/OneDrive-MichiganMedicine/0-active-projects/expansion/expansion_20250604_154858/plate1a2L2"
+
 files = [f for f in os.listdir(folder) if f.endswith('.tif')]
 
 # Regex to parse filenames
