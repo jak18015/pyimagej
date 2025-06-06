@@ -13,6 +13,7 @@ class DeconGUI:
 
         self.ij = setup_imagej()
 
+
         # Variables
         self.wd = tk.StringVar()
         self.filename = tk.StringVar()
