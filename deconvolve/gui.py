@@ -17,23 +17,56 @@ class DeconGUI:
         self.filename = tk.StringVar()
         self.iterations = tk.IntVar(value=1)
         self.reg = tk.DoubleVar(value=0.002)
+        default_wavelengths = [647, 594, 488, 405]
+        default_wavelengths_str = ", ".join(str(w) for w in default_wavelengths)
+        self.wavelengths_str = tk.StringVar(value=default_wavelengths_str)
+        self.na = tk.DoubleVar(value=1.5)
+        self.ri_immersion = tk.DoubleVar(value=1.0)
+        self.ri_sample = tk.DoubleVar(value=1.0)
+        self.lat_res = tk.DoubleVar(value=0.07)
+        self.ax_res = tk.DoubleVar(value=1.0)
+        self.pz = tk.DoubleVar(value=0.0)
 
         # Layout
-        tk.Label(root, text="Working Directory").grid(row=0, column=0)
-        tk.Entry(root, textvariable=self.wd, width=40).grid(row=0, column=1)
+        row = 0
+        tk.Label(root, text="Folder containing TIFF's").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.wd, width=40).grid(row=row, column=1)
         tk.Button(root, text="Browse", command=self.browse_dir).grid(row=0, column=2)
-
-        tk.Label(root, text="TIFF File").grid(row=1, column=0)
-        tk.Entry(root, textvariable=self.filename, width=40).grid(row=1, column=1)
+        row += 1
+        tk.Label(root, text="TIFF File").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.filename, width=40).grid(row=row, column=1)
         tk.Button(root, text="Select", command=self.select_file).grid(row=1, column=2)
+        row += 1
+        tk.Label(root, text="Iterations").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.iterations).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="Regularization").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.reg).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="Wavelengths(nm, comma-separated, in channel order)").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.wavelengths_str).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="Numerical Aperture (NA)").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.na).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="Refractive Index (Immersion)").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.ri_immersion).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="Refractive Index (Sample)").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.ri_sample).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="Lateral Resolution (um)").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.lat_res).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="Axial Resolution (um)").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.ax_res).grid(row=row, column=1)
+        row += 1
+        tk.Label(root, text="PZ (um)").grid(row=row, column=0)
+        tk.Entry(root, textvariable=self.pz).grid(row=row, column=1)
+        row += 1
+        # Run button
+        tk.Button(root, text="Run Deconvolution", command=self.run).grid(row=row, column=0, columnspan=3, pady=10)
 
-        tk.Label(root, text="Iterations").grid(row=2, column=0)
-        tk.Entry(root, textvariable=self.iterations).grid(row=2, column=1)
-
-        tk.Label(root, text="Regularization").grid(row=3, column=0)
-        tk.Entry(root, textvariable=self.reg).grid(row=3, column=1)
-
-        tk.Button(root, text="Run Deconvolution", command=self.run).grid(row=4, column=0, columnspan=3, pady=10)
 
     def browse_dir(self):
         dir_selected = filedialog.askdirectory()
@@ -51,12 +84,13 @@ class DeconGUI:
         try:
             wd = self.wd.get()
             img = self.filename.get()
+            wavelength_str = self.wavelengths_str.get()
+            wavelength = [int(w.strip()) for w in wavelength_str.split(',') if w.strip().isdigit()]
             iterations = self.iterations.get()
             reg = self.reg.get()
             iterstring = f"{iterations:02}"
 
             # Fixed parameters for now
-            wavelength = [647, 594, 488, 405]
             na = 1.5
             ri_immersion = 1.0
             ri_sample = 1.0
